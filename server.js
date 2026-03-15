@@ -93,3 +93,6 @@ app.listen(PORT, () => {
     console.log('🚀 SYSTEM IS LIVE ON PORT 5000!');
     console.log('------------------------------------------');
 });
+app.listen(5000, () => console.log('🚀 Seven-Star Elite System Live on Port 5000'));
+
+module.exports = app;
