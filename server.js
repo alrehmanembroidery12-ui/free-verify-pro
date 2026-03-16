@@ -35,9 +35,9 @@ app.get('/login', (req, res) => res.send(`
     <head>${PAGE_HEAD}</head>
     <body class="flex flex-col items-center justify-center min-h-screen p-6">
         <div class="glass p-10 rounded-[2rem] w-full max-w-sm text-center">
-            <h2 class="text-xl font-bold mb-8 italic">Admin Access</h2>
-            <input type="text" id="u" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl mb-4 text-white" placeholder="Username">
-            <input type="password" id="p" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl mb-4 text-white" placeholder="Password">
+            <h2 class="text-xl font-bold mb-8">Admin Access</h2>
+            <input type="text" id="u" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl mb-4 text-white outline-none" placeholder="Username">
+            <input type="password" id="p" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl mb-4 text-white outline-none" placeholder="Password">
             <button onclick="doLogin()" class="w-full bg-blue-600 p-4 rounded-xl font-bold">Login</button>
         </div>
         <script>
@@ -56,36 +56,30 @@ app.get('/admin-panel', async (req, res) => {
     const { data: txs } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
     const total = txs?.reduce((acc, c) => acc + (c.status === 'verified' ? c.amount : 0), 0) || 0;
 
-    // Build Table Rows Safely
-    let tableRows = '';
-    if (txs && txs.length > 0) {
-        txs.forEach(t => {
-            tableRows += `
-                <tr class="border-b border-white/5">
-                    <td class="p-4 text-blue-400 font-mono text-xs">${t.trx_id}</td>
-                    <td class="p-4 text-sm">${t.student_name || 'Pending'}</td>
-                    <td class="p-4 text-right font-black">Rs ${t.amount}</td>
-                </tr>
-            `;
-        });
-    } else {
-        tableRows = '<tr><td colspan="3" class="p-4 text-center">No Records Found</td></tr>';
-    }
+    let tableRows = txs && txs.length > 0 ? txs.map(t => `
+        <tr class="border-b border-white/5">
+            <td class="p-4 text-blue-400 font-mono text-xs">${t.trx_id}</td>
+            <td class="p-4 text-sm font-bold">${t.student_name || 'Pending'}</td>
+            <td class="p-4 text-right font-black">Rs ${t.amount}</td>
+        </tr>
+    `).join('') : '<tr><td colspan="3" class="p-4 text-center">No Records Found</td></tr>';
 
     res.send(`
         <head>${PAGE_HEAD}</head>
         <body class="flex h-screen overflow-hidden">
             <aside class="w-64 glass border-r border-white/5 p-6 hidden md:flex flex-col">
                 <h1 class="text-xl font-bold text-blue-500 mb-10">FEEVERIFY PRO</h1>
-                <button onclick="st('d')" id="bd" class="w-full text-left p-4 rounded-xl active-tab font-bold mb-2">📊 Dashboard</button>
-                <button onclick="st('s')" id="bs" class="w-full text-left p-4 rounded-xl font-bold">⚙️ Settings</button>
-                <button onclick="location.href='/'" class="mt-auto text-red-500 text-xs font-bold p-2">Logout</button>
+                <nav class="space-y-4 flex-1">
+                    <button onclick="st('d')" id="bd" class="w-full text-left p-4 rounded-xl active-tab font-bold">📊 Dashboard</button>
+                    <button onclick="st('s')" id="bs" class="w-full text-left p-4 rounded-xl font-bold">⚙️ Settings</button>
+                </nav>
+                <button onclick="location.href='/'" class="mt-auto text-red-500 text-xs font-bold p-2 uppercase">Logout</button>
             </aside>
             <main class="flex-1 p-10 overflow-y-auto">
                 <div id="td">
                     <div class="flex justify-between items-center mb-10">
-                        <h1 class="text-2xl font-bold italic">Live Monitor</h1>
-                        <div class="glass px-6 py-2 rounded-xl text-emerald-400 font-bold border border-emerald-500/20">Rs ${total.toLocaleString()}</div>
+                        <h1 class="text-3xl font-black italic text-white">Live Monitor</h1>
+                        <div class="glass px-6 py-2 rounded-xl text-emerald-400 font-bold border border-emerald-500/20 text-lg">Rs ${total.toLocaleString()}</div>
                     </div>
                     <div class="glass rounded-3xl overflow-hidden">
                         <table class="w-full text-left text-sm">
@@ -98,7 +92,7 @@ app.get('/admin-panel', async (req, res) => {
                 </div>
                 <div id="ts" class="hidden">
                     <h2 class="text-2xl font-bold mb-8">System Settings</h2>
-                    <div class="glass p-8 rounded-2xl">
+                    <div class="glass p-8 rounded-2xl border-emerald-500/20">
                         <p class="text-blue-400 text-xs uppercase mb-2">Database Connection</p>
                         <p class="text-emerald-400 font-bold">Connected & Live</p>
                     </div>
@@ -122,10 +116,10 @@ app.get('/student', (req, res) => res.send(`
         <div class="glass p-10 rounded-[3rem] w-full max-w-md text-center">
             <h2 class="text-2xl font-bold mb-10 italic">Fee Portal</h2>
             <input type="text" id="sn" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl mb-4 text-white" placeholder="Student Name">
-            <input type="text" id="ti" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl mb-4 text-white" placeholder="Trx ID">
+            <input type="text" id="ti" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl mb-4 text-white font-mono" placeholder="Trx ID">
             <input type="number" id="am" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl mb-4 text-white" placeholder="Amount Paid">
-            <button onclick="v()" id="btn" class="w-full bg-blue-600 p-4 rounded-xl font-bold">Verify Payment</button>
-            <div id="m" class="mt-4 font-bold text-xs"></div>
+            <button onclick="v()" id="btn" class="w-full bg-blue-600 p-4 rounded-xl font-bold text-white shadow-lg">Verify Payment</button>
+            <div id="m" class="mt-4 font-bold text-xs uppercase italic tracking-widest"></div>
         </div>
         <script>
             async function v(){
@@ -147,5 +141,5 @@ app.post('/student-verify', async (req, res) => {
     } catch (e) { res.status(500).json({ok:false}); }
 });
 
-app.listen(5000, () => console.log('🚀 System Live'));
+app.listen(5000, () => console.log('🚀 Final System Live'));
 module.exports = app;
