@@ -190,4 +190,12 @@ app.post('/student-verify', async (req, res) => {
     const { name, trxId, amount } = req.body;
     try {
         const { data: found } = await supabase.from('transactions').select('*').eq('trx_id', trxId).single();
-        if (found && found.status !== 'verified' && parseInt(found.amount) ===
+        if (found && found.status !== 'verified' && parseInt(found.amount) === parseInt(amount)) {
+            await supabase.from('transactions').update({ status: 'verified', student_name: name }).eq('trx_id', trxId);
+            res.status(200).json({ message: "OK" });
+        } else res.status(400).json({ message: "Error" });
+    } catch (err) { res.status(500).json({ message: "Error" }); }
+});
+
+app.listen(5000, () => console.log('🚀 System Live'));
+module.exports = app;
