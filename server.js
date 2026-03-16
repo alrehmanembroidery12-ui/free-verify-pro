@@ -35,7 +35,7 @@ app.get('/login', (req, res) => res.send(`
     <head>${PAGE_HEAD}</head>
     <body class="flex flex-col items-center justify-center min-h-screen p-6">
         <div class="glass p-10 rounded-[2rem] w-full max-w-sm text-center">
-            <h2 class="text-xl font-bold mb-8">Admin Access</h2>
+            <h2 class="text-xl font-bold mb-8 italic">Admin Access</h2>
             <input type="text" id="u" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl mb-4 text-white outline-none" placeholder="Username">
             <input type="password" id="p" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl mb-4 text-white outline-none" placeholder="Password">
             <button onclick="doLogin()" class="w-full bg-blue-600 p-4 rounded-xl font-bold">Login</button>
@@ -54,15 +54,16 @@ app.post('/auth-check', (req, res) => (req.body.u === config.user && req.body.p 
 app.get('/admin-panel', async (req, res) => {
     if(req.query.auth !== 'true') return res.redirect('/login');
     const { data: txs } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
-    const total = txs?.reduce((acc, c) => acc + (c.status === 'verified' ? c.amount : 0), 0) || 0;
+    const totalValue = txs?.reduce((acc, c) => acc + (c.status === 'verified' ? c.amount : 0), 0) || 0;
 
-    let tableRows = txs && txs.length > 0 ? txs.map(t => `
-        <tr class="border-b border-white/5">
-            <td class="p-4 text-blue-400 font-mono text-xs">${t.trx_id}</td>
-            <td class="p-4 text-sm font-bold">${t.student_name || 'Pending'}</td>
-            <td class="p-4 text-right font-black">Rs ${t.amount}</td>
-        </tr>
-    `).join('') : '<tr><td colspan="3" class="p-4 text-center">No Records Found</td></tr>';
+    let rows = "";
+    if (txs && txs.length > 0) {
+        txs.forEach(t => {
+            rows += `<tr class="border-b border-white/5"><td class="p-4 text-blue-400 font-mono text-xs">${t.trx_id}</td><td class="p-4 text-sm font-bold">${t.student_name || 'System'}</td><td class="p-4 text-right font-black">Rs ${t.amount}</td></tr>`;
+        });
+    } else {
+        rows = `<tr><td colspan="3" class="p-10 text-center text-slate-500">No Transactions Found</td></tr>`;
+    }
 
     res.send(`
         <head>${PAGE_HEAD}</head>
@@ -78,21 +79,21 @@ app.get('/admin-panel', async (req, res) => {
             <main class="flex-1 p-10 overflow-y-auto">
                 <div id="td">
                     <div class="flex justify-between items-center mb-10">
-                        <h1 class="text-3xl font-black italic text-white">Live Monitor</h1>
-                        <div class="glass px-6 py-2 rounded-xl text-emerald-400 font-bold border border-emerald-500/20 text-lg">Rs ${total.toLocaleString()}</div>
+                        <h1 class="text-2xl font-bold italic">Live Monitor</h1>
+                        <div class="glass px-6 py-2 rounded-xl text-emerald-400 font-bold border border-emerald-500/20 text-lg">Rs ${totalValue.toLocaleString()}</div>
                     </div>
                     <div class="glass rounded-3xl overflow-hidden">
                         <table class="w-full text-left text-sm">
                             <tr class="bg-white/5 text-[10px] text-slate-500 uppercase">
                                 <th class="p-4">TID</th><th class="p-4">Student</th><th class="p-4 text-right">Amount</th>
                             </tr>
-                            ${tableRows}
+                            ${rows}
                         </table>
                     </div>
                 </div>
-                <div id="ts" class="hidden">
+                <div id="ts" style="display: none;">
                     <h2 class="text-2xl font-bold mb-8">System Settings</h2>
-                    <div class="glass p-8 rounded-2xl border-emerald-500/20">
+                    <div class="glass p-8 rounded-2xl border-blue-500/20">
                         <p class="text-blue-400 text-xs uppercase mb-2">Database Connection</p>
                         <p class="text-emerald-400 font-bold">Connected & Live</p>
                     </div>
@@ -100,10 +101,10 @@ app.get('/admin-panel', async (req, res) => {
             </main>
             <script>
                 function st(t){
-                    document.getElementById('td').classList.toggle('hidden',t!=='d');
-                    document.getElementById('ts').classList.toggle('hidden',t!=='s');
-                    document.getElementById('bd').classList.toggle('active-tab',t==='d');
-                    document.getElementById('bs').classList.toggle('active-tab',t==='s');
+                    document.getElementById('td').style.display = (t === 'd' ? 'block' : 'none');
+                    document.getElementById('ts').style.display = (t === 's' ? 'block' : 'none');
+                    document.getElementById('bd').classList.toggle('active-tab', t === 'd');
+                    document.getElementById('bs').classList.toggle('active-tab', t === 's');
                 }
             </script>
         </body>
@@ -116,7 +117,7 @@ app.get('/student', (req, res) => res.send(`
         <div class="glass p-10 rounded-[3rem] w-full max-w-md text-center">
             <h2 class="text-2xl font-bold mb-10 italic">Fee Portal</h2>
             <input type="text" id="sn" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl mb-4 text-white" placeholder="Student Name">
-            <input type="text" id="ti" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl mb-4 text-white font-mono" placeholder="Trx ID">
+            <input type="text" id="ti" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl mb-4 text-white" placeholder="Trx ID">
             <input type="number" id="am" class="w-full bg-black/40 border border-white/10 p-4 rounded-xl mb-4 text-white" placeholder="Amount Paid">
             <button onclick="v()" id="btn" class="w-full bg-blue-600 p-4 rounded-xl font-bold text-white shadow-lg">Verify Payment</button>
             <div id="m" class="mt-4 font-bold text-xs uppercase italic tracking-widest"></div>
